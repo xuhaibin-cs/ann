@@ -63,9 +63,9 @@ Each attention head projects $X$ into queries, keys, and values with head dimens
 
 $$
 \begin{aligned}
-Q &= XW_Q, &
-K &= XW_K, &
-V &= XW_V, \\
+Q &= XW_Q + b_Q, &
+K &= XW_K + b_K, &
+V &= XW_V + b_V, \\
 S &= \frac{QK^\top}{\sqrt{d_{\text{head}}}}, &
 A &= \mathrm{softmax}(\mathrm{mask}(S)), &
 H &= AV.
@@ -78,7 +78,7 @@ Multi-head attention runs this calculation in parallel heads, concatenates the h
 
 $$
 \mathrm{MHA}(X) =
-\mathrm{concat}(H_1,\ldots,H_n)W_O.
+\mathrm{concat}(H_1,\ldots,H_n)W_O + b_O.
 $$
 
 The feed-forward sublayer is a position-wise MLP shared across time:
@@ -140,10 +140,10 @@ The denoiser receives the noisy image plus a scaled timestep, then predicts the 
 $$
 \hat{\epsilon} = \epsilon_{\theta}(x_t,t),
 \qquad
-L = \mathbb{E}\left[\lVert \epsilon - \hat{\epsilon} \rVert_2^2\right].
+L = \mathbb{E}\left[\frac{1}{D}\lVert \epsilon - \hat{\epsilon} \rVert_2^2\right].
 $$
 
-Sampling starts from Gaussian noise and applies the simplified noise-prediction reverse update used in this project:
+Sampling starts from Gaussian noise and applies the simplified noise-prediction reverse update used in this project. The extra noise term is used for $t > 0$ and omitted at the final step:
 
 $$
 x_{t-1} =
@@ -171,6 +171,8 @@ $$
 \begin{aligned}
 m_t &= \beta_1 m_{t-1} + (1-\beta_1)g_t, \\
 v_t &= \beta_2 v_{t-1} + (1-\beta_2)g_t^2, \\
+\hat{m}_t &= \frac{m_t}{1-\beta_1^t}, \\
+\hat{v}_t &= \frac{v_t}{1-\beta_2^t}, \\
 \theta_t &\leftarrow \theta_{t-1} - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}.
 \end{aligned}
 $$
