@@ -67,7 +67,7 @@ Q &= XW_Q, &
 K &= XW_K, &
 V &= XW_V, \\
 S &= \frac{QK^\top}{\sqrt{d_{\text{head}}}}, &
-A &= \operatorname{softmax}(\operatorname{mask}(S)), &
+A &= \mathrm{softmax}(\mathrm{mask}(S)), &
 H &= AV.
 \end{aligned}
 $$
@@ -77,23 +77,23 @@ The causal mask keeps entries with source position $j \le t$ and replaces future
 Multi-head attention runs this calculation in parallel heads, concatenates the head outputs, and applies an output projection:
 
 $$
-\operatorname{MHA}(X) =
-\operatorname{concat}(H_1,\ldots,H_n)W_O.
+\mathrm{MHA}(X) =
+\mathrm{concat}(H_1,\ldots,H_n)W_O.
 $$
 
 The feed-forward sublayer is a position-wise MLP shared across time:
 
 $$
-\operatorname{FFN}(x) =
-\operatorname{GELU}(xW_1 + b_1)W_2 + b_2.
+\mathrm{FFN}(x) =
+\mathrm{GELU}(xW_1 + b_1)W_2 + b_2.
 $$
 
 This implementation uses a pre-norm decoder block:
 
 $$
 \begin{aligned}
-X_1 &= X + \operatorname{MHA}(\operatorname{LayerNorm}(X)), \\
-X_2 &= X_1 + \operatorname{FFN}(\operatorname{LayerNorm}(X_1)).
+X_1 &= X + \mathrm{MHA}(\mathrm{LayerNorm}(X)), \\
+X_2 &= X_1 + \mathrm{FFN}(\mathrm{LayerNorm}(X_1)).
 \end{aligned}
 $$
 
@@ -101,11 +101,11 @@ The final LayerNorm and language-model head produce logits $Z \in \mathbb{R}^{B 
 
 $$
 \begin{aligned}
-p &= \operatorname{softmax}(Z), \\
+p &= \mathrm{softmax}(Z), \\
 L &= -\frac{1}{BT}\sum_{b=1}^{B}\sum_{t=1}^{T}
 \log p_{b,t,y_{b,t}}, \\
 \frac{\partial L}{\partial Z}
-&= \frac{p - \operatorname{onehot}(y)}{BT}.
+&= \frac{p - \mathrm{onehot}(y)}{BT}.
 \end{aligned}
 $$
 
