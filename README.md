@@ -129,10 +129,10 @@ $$
 For a clean inspection image $x_0$, noise $\epsilon \sim \mathcal{N}(0,I)$, and timestep $t$, the closed-form forward noising process is:
 
 $$
-x_t =
-\sqrt{\bar{\alpha}_t}\,x_0
-+ \sqrt{1-\bar{\alpha}_t}\,\epsilon,
-\qquad \epsilon \sim \mathcal{N}(0,I).
+x_t = \sqrt{\bar{\alpha}_t}\,x_0
+      {}+ \sqrt{1-\bar{\alpha}_t}\,\epsilon,
+\qquad
+\epsilon \sim \mathcal{N}(0,I).
 $$
 
 The denoiser receives the noisy image plus a scaled timestep, then predicts the injected noise. This mirrors the practical idea behind many industrial restoration and anomaly workflows: model what normal structure looks like, then use the reconstruction or denoising behavior to expose corruption, damage, or uncertainty.
@@ -147,10 +147,10 @@ Sampling starts from Gaussian noise and applies the simplified noise-prediction 
 
 $$
 x_{t-1} =
-\frac{x_t - \beta_t \epsilon_{\theta}(x_t,t) / \sqrt{1-\bar{\alpha}_t}}
-{\sqrt{\alpha_t}}
-+ \sqrt{\beta_t}\,z,
-\qquad z \sim \mathcal{N}(0,I),\ t > 0.
+\frac{x_t - \beta_t \epsilon_{\theta}(x_t,t) / \sqrt{1-\bar{\alpha}_t}}{\sqrt{\alpha_t}}
+      {}+ \sqrt{\beta_t}\,z,
+\qquad
+z \sim \mathcal{N}(0,I),\ t > 0.
 $$
 
 This is intentionally small and practical rather than a complete generative-model framework: there is no U-Net, learned variance, classifier-free guidance, advanced sampler, large dataset, or domain-specific sensor model. The value is that the forward process, denoising objective, and reverse trajectory are all visible in a few NumPy operations, while still pointing toward serious industrial uses such as defect inspection, image restoration, simulation-based data augmentation, and uncertainty-aware monitoring.
@@ -171,9 +171,7 @@ $$
 \begin{aligned}
 m_t &= \beta_1 m_{t-1} + (1-\beta_1)g_t, \\
 v_t &= \beta_2 v_{t-1} + (1-\beta_2)g_t^2, \\
-\theta_t &\leftarrow
-\theta_{t-1}
-- \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}.
+\theta_t &\leftarrow \theta_{t-1} - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}.
 \end{aligned}
 $$
 
