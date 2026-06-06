@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiniANN Visualizer</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>MiniANN Transformer Lab</h1>
+        <p>Inspect NumPy-only neural systems from parameters to generated behavior.</p>
+      </div>
+      <div class="metrics" id="metrics"></div>
+    </header>
+
+    <main class="workspace">
+      <section class="lab-nav" aria-label="Visualizer sections">
+        <button class="tab-button active" data-view="ann">Classic ANN</button>
+        <button class="tab-button" data-view="transformer">Transformer</button>
+        <button class="tab-button" data-view="diffusion">Diffusion</button>
+        <button class="tab-button" data-view="training">Training</button>
+      </section>
+
+      <section class="status-line" id="status">Loading model state...</section>
+
+      <section class="view active" data-view-panel="ann">
+        <section class="view-toolbar">
+          <div>
+            <h2>Classic ANN</h2>
+            <p>2 -> 8 -> 8 -> 1 MLP on XOR, using Linear + Tanh + Sigmoid + MSE.</p>
+          </div>
+          <label class="field small-field">
+            <span>ANN steps</span>
+            <input id="annSteps" type="number" min="1" max="1000" value="100" />
+          </label>
+          <button id="annTrainBtn">Train ANN</button>
+        </section>
+
+        <section class="ann-workspace">
+          <section class="panel ann-boundary-panel">
+            <div class="panel-head">
+              <h2>Decision Boundary</h2>
+              <div class="panel-meta">
+                <div class="ann-summary" id="annSummary"></div>
+                <div class="legend" id="annLegend"></div>
+              </div>
+            </div>
+            <div class="boundary-frame">
+              <canvas id="annCanvas" width="520" height="520"></canvas>
+            </div>
+          </section>
+
+          <section class="panel ann-activations-panel">
+            <div class="panel-head">
+              <h2>Layer Activations</h2>
+            </div>
+            <div id="annActivations" class="ann-activations"></div>
+          </section>
+
+          <section class="panel ann-predictions-panel">
+            <div class="panel-head">
+              <h2>XOR Predictions</h2>
+            </div>
+            <div id="annPredictions" class="ann-predictions"></div>
+          </section>
+
+          <section class="panel ann-neurons-panel">
+            <div class="panel-head">
+              <h2>Neurons</h2>
+              <label class="inline-select">
+                Layer
+                <select id="annLayerSelect"></select>
+              </label>
+            </div>
+            <div id="annNeurons" class="ann-neurons"></div>
+          </section>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="transformer">
+        <section class="control-band transformer-controls">
+          <label class="field prompt-field">
+            <span>Prompt</span>
+            <input id="prompt" value="to " autocomplete="off" />
+          </label>
+          <label class="field small-field">
+            <span>New tokens</span>
+            <input id="maxTokens" type="number" min="1" max="160" value="48" />
+          </label>
+          <label class="field small-field">
+            <span>Temperature</span>
+            <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.8" />
+          </label>
+          <button id="inspectBtn">Inspect</button>
+          <button id="generateBtn">Generate</button>
+        </section>
+
+        <section class="transformer-grid">
+          <aside class="panel structure-panel">
+            <div class="panel-head">
+              <h2>Model Path</h2>
+            </div>
+            <div id="structure" class="structure"></div>
+          </aside>
+
+          <section class="panel attention-panel">
+            <div class="panel-head">
+              <h2>Attention</h2>
+              <div class="selectors">
+                <label>
+                  Layer
+                  <select id="layerSelect"></select>
+                </label>
+                <label>
+                  Head
+                  <select id="headSelect"></select>
+                </label>
+              </div>
+            </div>
+            <canvas id="attentionCanvas" width="680" height="520"></canvas>
+            <div class="tokens" id="tokens"></div>
+          </section>
+
+          <aside class="panel side-panel">
+            <div class="panel-head">
+              <h2>Next Token</h2>
+            </div>
+            <div id="probabilities" class="probabilities"></div>
+            <div class="panel-head compact">
+              <h2>Causal Mask</h2>
+            </div>
+            <canvas id="maskCanvas" width="280" height="220"></canvas>
+          </aside>
+
+          <section class="panel output-panel">
+            <div class="panel-head">
+              <h2>Generated Text</h2>
+            </div>
+            <pre id="generatedText"></pre>
+          </section>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="diffusion">
+        <section class="view-toolbar">
+          <div>
+            <h2>Toy Diffusion</h2>
+            <p>16x16 synthetic images, forward noise schedule, and an MLP denoiser that predicts noise.</p>
+          </div>
+          <label class="field small-field">
+            <span>Diff steps</span>
+            <input id="diffusionSteps" type="number" min="1" max="500" value="20" />
+          </label>
+          <button id="diffusionTrainBtn">Train Diffusion</button>
+          <button id="diffusionSampleBtn">Sample</button>
+        </section>
+
+        <section class="panel diffusion-panel">
+          <div class="panel-head">
+            <h2>Toy Diffusion Images</h2>
+            <div class="ann-summary" id="diffusionSummary"></div>
+          </div>
+          <div class="diffusion-body">
+            <div>
+              <h2>Forward Noising</h2>
+              <div id="forwardDiffusion" class="image-strip"></div>
+            </div>
+            <div>
+              <h2>Reverse Sampling</h2>
+              <div id="reverseDiffusion" class="image-strip"></div>
+            </div>
+            <div>
+              <h2>Diffusion Loss</h2>
+              <svg id="diffusionLossChart" viewBox="0 0 720 180" role="img"></svg>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="training">
+        <section class="view-toolbar training-toolbar">
+          <div>
+            <h2>Transformer Training</h2>
+            <p>Track next-token loss and inspect the latest sampled text after training.</p>
+          </div>
+          <label class="field small-field">
+            <span>Train steps</span>
+            <input id="trainSteps" type="number" min="1" max="200" value="20" />
+          </label>
+          <button id="trainBtn">Train Transformer</button>
+        </section>
+
+        <section class="training-grid">
+          <section class="panel loss-panel">
+            <div class="panel-head">
+              <h2>Transformer Loss</h2>
+            </div>
+            <svg id="lossChart" viewBox="0 0 720 220" role="img"></svg>
+          </section>
+          <section class="panel training-output-panel">
+            <div class="panel-head">
+              <h2>Latest Training Sample</h2>
+            </div>
+            <pre id="trainingText"></pre>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -17,23 +17,29 @@ class Linear(Module):
         )
         self.bias = Parameter.from_data(np.zeros(out_features), name=f"{name}.bias") if bias else None
         self.x: Optional[Array] = None
+        self.z: Optional[Array] = None
+        self.grad_output: Optional[Array] = None
+        self.grad_input: Optional[Array] = None
 
     def forward(self, x: Array) -> Array:
         self.x = x
         y = x @ self.weight.data
         if self.bias is not None:
             y = y + self.bias.data
+        self.z = y
         return y
 
     def backward(self, grad: Array) -> Array:
         if self.x is None:
             raise RuntimeError("Linear.backward called before forward")
+        self.grad_output = grad
         x2 = self.x.reshape(-1, self.x.shape[-1])
         g2 = grad.reshape(-1, grad.shape[-1])
         self.weight.grad += x2.T @ g2
         if self.bias is not None:
             self.bias.grad += g2.sum(axis=0)
-        return grad @ self.weight.data.T
+        self.grad_input = grad @ self.weight.data.T
+        return self.grad_input
 
     def parameters(self) -> list[Parameter]:
         return [self.weight] + ([] if self.bias is None else [self.bias])

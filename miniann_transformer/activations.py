@@ -41,6 +41,34 @@ class GELU:
         return grad * (cdf + x * pdf)
 
 
+class Sigmoid:
+    def __init__(self) -> None:
+        self.y: Optional[Array] = None
+
+    def forward(self, x: Array) -> Array:
+        self.y = 1.0 / (1.0 + np.exp(-x))
+        return self.y
+
+    def backward(self, grad: Array) -> Array:
+        if self.y is None:
+            raise RuntimeError("Sigmoid.backward called before forward")
+        return grad * self.y * (1.0 - self.y)
+
+
+class Tanh:
+    def __init__(self) -> None:
+        self.y: Optional[Array] = None
+
+    def forward(self, x: Array) -> Array:
+        self.y = np.tanh(x)
+        return self.y
+
+    def backward(self, grad: Array) -> Array:
+        if self.y is None:
+            raise RuntimeError("Tanh.backward called before forward")
+        return grad * (1.0 - self.y * self.y)
+
+
 def softmax(x: Array, axis: int = -1) -> Array:
     shifted = x - np.max(x, axis=axis, keepdims=True)
     exp = np.exp(shifted)
