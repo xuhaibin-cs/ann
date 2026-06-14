@@ -38,6 +38,20 @@
           <button id="annTrainBtn">Train ANN</button>
         </section>
 
+        <section class="panel math-journey-panel">
+          <div class="panel-head">
+            <div>
+              <h2>One Training Step, Mathematically</h2>
+              <p class="panel-subtitle">Follow one XOR sample through forward propagation, loss, chain rule, backpropagation, and parameter update.</p>
+            </div>
+            <label class="inline-select">
+              Trace sample
+              <select id="annSampleSelect"></select>
+            </label>
+          </div>
+          <div id="annMathJourney" class="math-journey"></div>
+        </section>
+
         <section class="ann-workspace">
           <section class="panel ann-boundary-panel">
             <div class="panel-head">

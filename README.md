@@ -18,6 +18,7 @@ In other words, the repository is not meant to appear fully polished all at once
 - Toy character-level training loop
 - Autoregressive generation with temperature sampling
 - Debug outputs: tensor shapes, causal mask, attention matrices, token probabilities hook points, and parameter count
+- Browser lab with a numerical ANN training trace from input through parameter update
 
 ## ANN Components To Transformer
 
@@ -37,7 +38,9 @@ The browser lab makes these pieces inspectable from the parameter level up to ge
 
 ### Classic ANN
 
-The XOR demo is a small multilayer perceptron. For one input vector $x \in \mathbb{R}^2$, the network composes affine maps and elementwise nonlinearities:
+The Classic ANN lab trains a `2 -> 8 -> 8 -> 1` multilayer perceptron on all four XOR examples. The two hidden layers use Tanh, the output uses Sigmoid, the loss is mean squared error, and the optimizer is Adam.
+
+For one input vector $x \in \mathbb{R}^2$, the forward pass composes affine maps and elementwise nonlinearities:
 
 $$
 \begin{aligned}
@@ -48,7 +51,61 @@ L &= \frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i - y_i)^2.
 \end{aligned}
 $$
 
-The important idea is the chain rule. Each module stores just enough intermediate state during `forward` to compute local gradients during `backward`, then passes the gradient to the previous module. The demo is intentionally low-dimensional, so the learned decision boundary can be plotted directly over the input plane.
+The output responsibility begins with the MSE and Sigmoid derivatives:
+
+$$
+\frac{\partial L}{\partial \hat{y}}
+= \frac{2(\hat{y}-y)}{N},
+\qquad
+\frac{\partial \hat{y}}{\partial z_3}
+= \hat{y}(1-\hat{y}),
+\qquad
+\delta_3
+= \frac{\partial L}{\partial z_3}
+= \frac{\partial L}{\partial \hat{y}}
+  \frac{\partial \hat{y}}{\partial z_3}.
+$$
+
+Backpropagation applies the chain rule from right to left. For a linear layer followed by activation $f$:
+
+$$
+\frac{\partial L}{\partial W_l}
+= a_{l-1}^{\mathsf T}\delta_l,
+\qquad
+\frac{\partial L}{\partial b_l}
+= \sum \delta_l,
+\qquad
+\delta_{l-1}
+= (\delta_l W_l^{\mathsf T}) \odot f'(z_{l-1}).
+$$
+
+Each module stores the intermediate values required by its explicit `backward` method. Adam then updates every parameter using first and second gradient moments:
+
+$$
+\begin{aligned}
+m_t &= \beta_1m_{t-1} + (1-\beta_1)g_t, \\
+v_t &= \beta_2v_{t-1} + (1-\beta_2)g_t^2, \\
+\hat{m}_t &= \frac{m_t}{1-\beta_1^t},
+& \hat{v}_t &= \frac{v_t}{1-\beta_2^t}, \\
+\theta_t &= \theta_{t-1}
+- \eta\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}.
+\end{aligned}
+$$
+
+The browser lab exposes this computation as a ten-step mathematical trace:
+
+1. Input vector and target
+2. Weighted sum $z=xW+b$
+3. Nonlinear activation
+4. Hidden representations
+5. Sigmoid output prediction
+6. MSE calculation
+7. Chain-rule calculation at the output
+8. Layer-by-layer gradient propagation
+9. A real Adam parameter update with old value, update amount, and new value
+10. Repetition with the updated parameters
+
+The trace can switch among the four XOR samples. It shows formulas, tensor shapes, concrete numerical substitutions, layer gradient norms, predictions, and a synchronized decision boundary. XOR is intentionally low-dimensional so the nonlinear boundary is visible, while the current `2 -> 8 -> 8 -> 1` model remains large enough to inspect learned hidden representations.
 
 ### Decoder-Only Transformer
 
@@ -228,6 +285,16 @@ Use `temperature=0.0` for greedy decoding.
 
 ## Debug And Visualization
 
+Start the browser lab:
+
+```bash
+python -m visualizer.server
+```
+
+Then open [http://127.0.0.1:8765](http://127.0.0.1:8765).
+
+The **Classic ANN** tab is organized around the full mathematical training chain described above. The Transformer and Diffusion tabs expose their corresponding internal states and training behavior.
+
 Call:
 
 ```python
@@ -241,7 +308,7 @@ logits, debug = model.forward(token_ids, return_debug=True)
 Run:
 
 ```bash
-python -m unittest discover tests
+python -m unittest discover -s tests -v
 ```
 
 ## Limitations

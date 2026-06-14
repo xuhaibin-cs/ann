@@ -419,6 +419,108 @@ pre {
   font-size: 12px;
 }
 
+.panel-subtitle {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.math-journey-panel {
+  margin-bottom: 14px;
+}
+
+.math-journey {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
+  gap: 0;
+  overflow-x: auto;
+  padding: 14px;
+}
+
+.math-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 9px;
+  min-width: 220px;
+  padding: 12px 14px 14px 10px;
+  border-top: 3px solid var(--accent-3);
+  background: #f8fafc;
+}
+
+.math-step:nth-child(n + 6) {
+  border-top-color: var(--accent-2);
+  background: #fffaf4;
+}
+
+.math-step:not(:nth-child(5n))::after {
+  position: absolute;
+  z-index: 1;
+  top: 44px;
+  right: -7px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid #94a3b8;
+  border-right: 2px solid #94a3b8;
+  content: "";
+  transform: rotate(45deg);
+}
+
+.math-step-number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-3);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.math-step:nth-child(n + 6) .math-step-number {
+  background: var(--accent-2);
+}
+
+.math-step-copy {
+  min-width: 0;
+}
+
+.math-step h3 {
+  margin: 3px 0 6px;
+  font-size: 14px;
+}
+
+.math-step p {
+  min-height: 48px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.math-formula,
+.math-calculation {
+  margin-top: 9px;
+  padding: 8px;
+  overflow-wrap: anywhere;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.math-formula {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.math-calculation {
+  border: 1px solid #dbe3eb;
+  background: #fff;
+  color: #334155;
+}
+
 .panel-meta {
   display: grid;
   justify-items: end;
@@ -468,6 +570,24 @@ pre {
     "boundary activations predictions"
     "neurons neurons neurons";
   gap: 14px;
+}
+
+@media (max-width: 1250px) {
+  .math-journey {
+    grid-template-columns: repeat(10, minmax(220px, 1fr));
+  }
+
+  .math-step:not(:nth-child(5n))::after {
+    display: none;
+  }
+
+  .ann-workspace {
+    grid-template-columns: minmax(480px, 1fr) minmax(300px, 0.55fr);
+    grid-template-areas:
+      "boundary activations"
+      "boundary predictions"
+      "neurons neurons";
+  }
 }
 
 .ann-boundary-panel {

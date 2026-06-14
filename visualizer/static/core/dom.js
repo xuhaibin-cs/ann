@@ -30,6 +30,8 @@ export const els = {
   annSummary: byId("annSummary"),
   annLegend: byId("annLegend"),
   annCanvas: byId("annCanvas"),
+  annSampleSelect: byId("annSampleSelect"),
+  annMathJourney: byId("annMathJourney"),
   annActivations: byId("annActivations"),
   annPredictions: byId("annPredictions"),
   annLayerSelect: byId("annLayerSelect"),

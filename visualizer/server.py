@@ -185,12 +185,16 @@ class ClassicANNState:
         self.optimizer = Adam(self.model.parameters(), lr=5e-2)
         self.step = 0
         self.loss_history: list[float] = []
+        self.last_update: dict[str, Any] | None = None
 
     def snapshot(self) -> dict[str, Any]:
         prediction = self.model.forward(self.x)
         loss = self.loss_fn.forward(prediction, self.y)
+        self.optimizer.zero_grad()
+        self.model.backward(self.loss_fn.backward())
         activations = self.activation_summary()
         neurons = self.model.neuron_debug(sample_index=0)
+        math_trace = self.math_trace(prediction, loss)
         decision = self.decision_grid()
         return {
             "config": {
@@ -213,6 +217,7 @@ class ClassicANNState:
             "predictions": [float(v) for v in prediction[:, 0]],
             "activations": activations,
             "neurons": neurons,
+            "mathTrace": math_trace,
             "decision": decision,
         }
 
@@ -224,11 +229,89 @@ class ClassicANNState:
             loss = self.loss_fn.forward(prediction, self.y)
             self.optimizer.zero_grad()
             self.model.backward(self.loss_fn.backward())
+            params = self.model.parameters()
+            before = [param.data.copy() for param in params]
             self.optimizer.step()
             self.step += 1
+            first_param = params[0]
+            m_hat = self.optimizer.m[0] / (1.0 - self.optimizer.beta1**self.optimizer.t)
+            v_hat = self.optimizer.v[0] / (1.0 - self.optimizer.beta2**self.optimizer.t)
+            self.last_update = {
+                "step": self.step,
+                "parameter": first_param.name,
+                "index": [0, 0],
+                "oldValue": float(before[0][0, 0]),
+                "gradient": float(first_param.grad[0, 0]),
+                "firstMoment": float(m_hat[0, 0]),
+                "secondMoment": float(v_hat[0, 0]),
+                "delta": float(first_param.data[0, 0] - before[0][0, 0]),
+                "newValue": float(first_param.data[0, 0]),
+            }
             losses.append(float(loss))
             self.loss_history.append(float(loss))
         return {"trainedSteps": steps, "losses": losses, "ann": self.snapshot()}
+
+    def math_trace(self, prediction: np.ndarray, loss: float) -> dict[str, Any]:
+        sample_traces = []
+        activation_names = [self.config.activation] * len(self.config.hidden_dims) + [
+            self.config.output_activation or "identity"
+        ]
+        for sample_index, (point, target) in enumerate(zip(self.x, self.y)):
+            layers = []
+            for layer_index, (layer, activation_name) in enumerate(zip(self.model.layers, activation_names)):
+                if layer.x is None or layer.z is None or layer.grad_output is None:
+                    raise RuntimeError("math trace requested before forward/backward")
+                activation = self.model.last_activations[layer_index + 1]
+                layer_input = layer.x[sample_index]
+                contributions = layer_input[:, None] * layer.weight.data
+                layers.append(
+                    {
+                        "index": layer_index,
+                        "input": layer_input.copy(),
+                        "inputShape": layer_input.shape,
+                        "weights": layer.weight.data.copy(),
+                        "bias": None if layer.bias is None else layer.bias.data.copy(),
+                        "contributions": contributions,
+                        "z": layer.z[sample_index].copy(),
+                        "activation": activation[sample_index].copy(),
+                        "activationName": activation_name,
+                        "gradZ": layer.grad_output[sample_index].copy(),
+                        "weightGrad": layer.weight.grad.copy(),
+                        "biasGrad": None if layer.bias is None else layer.bias.grad.copy(),
+                    }
+                )
+            pred = float(prediction[sample_index, 0])
+            label = float(target[0])
+            dloss_dprediction = float(2.0 * (pred - label) / self.y.size)
+            sigmoid_derivative = pred * (1.0 - pred)
+            sample_traces.append(
+                {
+                    "index": sample_index,
+                    "input": point.copy(),
+                    "target": label,
+                    "prediction": pred,
+                    "sampleSquaredError": float((pred - label) ** 2),
+                    "dLossDPrediction": dloss_dprediction,
+                    "outputActivationDerivative": sigmoid_derivative,
+                    "dLossDOutputZ": dloss_dprediction * sigmoid_derivative,
+                    "layers": layers,
+                }
+            )
+        return {
+            "objective": "XOR binary classification",
+            "batchSize": int(self.x.shape[0]),
+            "loss": float(loss),
+            "lossFormula": "L = (1/N) sum_i (y_hat_i - y_i)^2",
+            "optimizer": {
+                "name": "Adam",
+                "learningRate": self.optimizer.lr,
+                "beta1": self.optimizer.beta1,
+                "beta2": self.optimizer.beta2,
+                "epsilon": self.optimizer.eps,
+            },
+            "samples": sample_traces,
+            "lastUpdate": self.last_update,
+        }
 
     def decision_grid(self, size: int = 48) -> dict[str, Any]:
         xs = np.linspace(-0.35, 1.35, size)

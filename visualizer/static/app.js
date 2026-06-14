@@ -2,7 +2,7 @@ import { api } from "./core/api.js";
 import { els, setBusy, setStatus } from "./core/dom.js";
 import { displayToken } from "./core/format.js";
 import { setTransformerState, state } from "./core/state.js";
-import { renderANN, renderANNNeurons } from "./renderers/ann.js";
+import { renderANN, renderANNMathJourney, renderANNNeurons } from "./renderers/ann.js";
 import { renderDiffusion } from "./renderers/diffusion.js";
 import { renderMetrics, renderView } from "./renderers/layout.js";
 import { renderTraining } from "./renderers/training.js";
@@ -16,7 +16,7 @@ const viewRenderers = {
 };
 
 const viewStatus = {
-  ann: "Classic ANN shows the XOR decision surface, layer activations, and neuron internals.",
+  ann: "Trace the XOR network from xW+b through activation, loss, chain rule, backpropagation, and parameter update.",
   transformer: "Transformer shows token flow, attention weights, causal masking, and next-token probabilities.",
   diffusion: "Diffusion shows the forward noise schedule and the current denoiser's reverse samples.",
   training: "Training tracks Transformer loss and stores the latest sampled text.",
@@ -139,6 +139,7 @@ els.annTrainBtn.addEventListener("click", trainANN);
 els.diffusionTrainBtn.addEventListener("click", trainDiffusion);
 els.diffusionSampleBtn.addEventListener("click", sampleDiffusion);
 els.annLayerSelect.addEventListener("change", () => renderANNNeurons(els, state.snapshot?.ann));
+els.annSampleSelect.addEventListener("change", () => renderANNMathJourney(els, state.snapshot?.ann));
 els.layerSelect.addEventListener("change", () => renderAttention(els, state.forward));
 els.headSelect.addEventListener("change", () => renderAttention(els, state.forward));
 window.addEventListener("resize", renderAll);
