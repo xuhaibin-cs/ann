@@ -4,6 +4,25 @@ MiniANN-Transformer is a minimal decoder-only Transformer written for research a
 
 This is not intended to replace PyTorch, TensorFlow, or JAX. The point is to make the path from ANN primitives to a tiny GPT-style language model readable.
 
+## Quick Start
+
+MiniANN-Transformer requires Python 3.10 or newer.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+python -m unittest discover -s tests -v
+```
+
+Start the interactive browser lab:
+
+```bash
+python -m visualizer.server
+```
+
+Then open [http://127.0.0.1:8765](http://127.0.0.1:8765). The server uses only the Python standard library and NumPy; the frontend is served directly, with no JavaScript build step.
+
 ## Progressive Learning Path
 
 This project is designed to grow from simple to complex. The early code favors small, explicit implementations that are easy to inspect and reason about. Later improvements can build on that foundation by adding richer training loops, better visualization, more model components, and eventually more realistic Transformer features.
@@ -19,6 +38,34 @@ In other words, the repository is not meant to appear fully polished all at once
 - Autoregressive generation with temperature sampling
 - Debug outputs: tensor shapes, causal mask, attention matrices, token probabilities hook points, and parameter count
 - Browser lab with a numerical ANN training trace from input through parameter update
+
+## Interactive Browser Lab
+
+| View | What you can inspect |
+| --- | --- |
+| Classic ANN | XOR inputs, neuron activations, the decision boundary, MSE gradients, layer-by-layer backpropagation, and a real Adam parameter update |
+| Transformer | Tokenization, tensor shapes, causal masks, attention matrices, next-token probabilities, training loss, and generated text |
+| Diffusion | Synthetic inspection patterns, forward noising, denoiser training loss, and the reverse sampling trajectory |
+
+Training and sampling happen in the local Python process. The browser calls small JSON endpoints exposed by `visualizer/server.py`, so every displayed value comes from the same NumPy implementation used by the tests and examples.
+
+## Repository Guide
+
+```text
+miniann_transformer/
+  tensor.py          Parameter and Module foundations
+  layers.py          Linear and feed-forward layers
+  activations.py     ReLU, GELU, Tanh, Sigmoid, and softmax
+  attention.py       Causal attention and multi-head self-attention
+  transformer.py     Decoder block and TinyGPT
+  mlp.py             Classic feed-forward ANN
+  diffusion.py       Toy DDPM-style denoising model
+  optim.py           SGD and Adam
+visualizer/           Local JSON server and browser interface
+examples/             Runnable tiny GPT demo
+tests/                Unit tests for ANN, Transformer, diffusion, and visualizer traces
+docs/screenshots/     README images
+```
 
 ## ANN Components To Transformer
 
@@ -285,15 +332,7 @@ Use `temperature=0.0` for greedy decoding.
 
 ## Debug And Visualization
 
-Start the browser lab:
-
-```bash
-python -m visualizer.server
-```
-
-Then open [http://127.0.0.1:8765](http://127.0.0.1:8765).
-
-The **Classic ANN** tab is organized around the full mathematical training chain described above. The Transformer and Diffusion tabs expose their corresponding internal states and training behavior.
+The **Classic ANN** tab is organized around the full mathematical training chain described above. The Transformer and Diffusion tabs expose their corresponding internal states and training behavior. See [Quick Start](#quick-start) for the launch command.
 
 Call:
 
