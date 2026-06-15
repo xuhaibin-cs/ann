@@ -89,14 +89,14 @@ The Classic ANN lab trains a `2 -> 8 -> 8 -> 1` multilayer perceptron on all fou
 
 For one input vector $x \in \mathbb{R}^2$, the forward pass composes affine maps and elementwise nonlinearities:
 
-$$
+```math
 \begin{aligned}
 z_1 &= x W_1 + b_1,        & h_1 &= \tanh(z_1), \\
 z_2 &= h_1 W_2 + b_2,      & h_2 &= \tanh(z_2), \\
 z_3 &= h_2 W_3 + b_3,      & \hat{y} &= \sigma(z_3), \\
 L &= \frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i - y_i)^2.
 \end{aligned}
-$$
+```
 
 The output responsibility begins with the MSE and Sigmoid derivatives:
 
@@ -128,16 +128,15 @@ $$
 
 Each module stores the intermediate values required by its explicit `backward` method. Adam then updates every parameter using first and second gradient moments:
 
-$$
+```math
 \begin{aligned}
 m_t &= \beta_1m_{t-1} + (1-\beta_1)g_t, \\
 v_t &= \beta_2v_{t-1} + (1-\beta_2)g_t^2, \\
 \hat{m}_t &= \frac{m_t}{1-\beta_1^t},
 & \hat{v}_t &= \frac{v_t}{1-\beta_2^t}, \\
-\theta_t &= \theta_{t-1}
-- \eta\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}.
+\theta_t &= \theta_{t-1} - \eta\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}.
 \end{aligned}
-$$
+```
 
 The browser lab exposes this computation as a ten-step mathematical trace:
 
@@ -165,7 +164,7 @@ $$
 
 Each attention head projects $X$ into queries, keys, and values with head dimension $d_{\text{head}} = d_{\text{model}} / n_{\text{heads}}$:
 
-$$
+```math
 \begin{aligned}
 Q &= XW_Q + b_Q, &
 K &= XW_K + b_K, &
@@ -174,7 +173,7 @@ S &= \frac{QK^\top}{\sqrt{d_{\text{head}}}}, &
 A &= \mathrm{softmax}(\mathrm{mask}(S)), &
 H &= AV.
 \end{aligned}
-$$
+```
 
 The causal mask keeps entries with source position $j \le t$ and replaces future scores with a very negative number before softmax. This makes the row $A[t,:]$ a probability distribution over only the current and previous tokens.
 
@@ -194,16 +193,16 @@ $$
 
 This implementation uses a pre-norm decoder block:
 
-$$
+```math
 \begin{aligned}
 X_1 &= X + \mathrm{MHA}(\mathrm{LayerNorm}(X)), \\
 X_2 &= X_1 + \mathrm{FFN}(\mathrm{LayerNorm}(X_1)).
 \end{aligned}
-$$
+```
 
 The final LayerNorm and language-model head produce logits $Z \in \mathbb{R}^{B \times T \times |V|}$. Training uses teacher forcing: the input sequence is paired with the same sequence shifted one token to the left. Cross entropy is averaged over all batch and time positions:
 
-$$
+```math
 \begin{aligned}
 p &= \mathrm{softmax}(Z), \\
 L &= -\frac{1}{BT}\sum_{b=1}^{B}\sum_{t=1}^{T}
@@ -211,7 +210,7 @@ L &= -\frac{1}{BT}\sum_{b=1}^{B}\sum_{t=1}^{T}
 \frac{\partial L}{\partial Z}
 &= \frac{p - \mathrm{onehot}(y)}{BT}.
 \end{aligned}
-$$
+```
 
 The derivative above is why the code can implement cross entropy and softmax together in a compact, numerically stable way.
 
@@ -271,7 +270,7 @@ $$
 
 For Adam, the implementation keeps first and second moment estimates:
 
-$$
+```math
 \begin{aligned}
 m_t &= \beta_1 m_{t-1} + (1-\beta_1)g_t, \\
 v_t &= \beta_2 v_{t-1} + (1-\beta_2)g_t^2, \\
@@ -279,7 +278,7 @@ v_t &= \beta_2 v_{t-1} + (1-\beta_2)g_t^2, \\
 \hat{v}_t &= \frac{v_t}{1-\beta_2^t}, \\
 \theta_t &\leftarrow \theta_{t-1} - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}.
 \end{aligned}
-$$
+```
 
 The lab exposes loss curves, parameter norms, gradient norms, attention matrices, masks, and sampled text so numerical training dynamics can be inspected alongside model behavior.
 
